@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Niveau 8 — Forensics</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#070b14;color:#e8eef7;line-height:1.7;font-size:15px;min-height:100vh}
+h2{color:#38bdf8;margin-bottom:12px;font-size:1.3rem}
+h3{color:#7dd3fc;margin:14px 0 8px;font-size:1rem}
+h4{color:#bae6fd;margin:10px 0 6px;font-size:.95rem}
+p{margin:8px 0;color:#cbd5e1}
+ul,ol{padding-left:22px;margin:8px 0}
+li{margin-bottom:5px;color:#cbd5e1}
+strong{color:#fbbf24}
+em{color:#38bdf8;font-style:normal;font-weight:600}
+code{background:#0a1220;padding:2px 6px;border-radius:4px;color:#7dd3fc;font-size:.88em;font-family:monospace;border:1px solid #1e2a44}
+pre{background:#050914;padding:12px;border-radius:6px;overflow-x:auto;font-size:.82em;margin:10px 0;color:#bae6fd;border:1px solid #1e2a44;white-space:pre}
+a{color:#00d4ff;text-decoration:none}
+button{background:#0ea5e9;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-weight:700;cursor:pointer;font-size:.9rem;font-family:inherit;margin:3px}
+button:hover{background:#0284c7}
+button.sec{background:#1a2540;color:#e8eef7;border:1px solid #2a3a5c}
+button.gold{background:#fbbf24;color:#1a1200}
+header{background:#111a2e;padding:14px 20px;border-bottom:2px solid #0ea5e9;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;position:sticky;top:0;z-index:10}
+.logo{color:#7dd3fc;font-weight:800;cursor:pointer;font-size:.95rem}
+.hs{color:#94a3b8;font-size:.78rem;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hs .pill{background:#0f1729;padding:5px 10px;border-radius:16px;border:1px solid #1e2a44;font-weight:600}
+.hs .pill b{color:#7dd3fc}
+.hs a{color:#ef4444;cursor:pointer;font-weight:700;padding:5px 10px}
+main{max-width:950px;margin:0 auto;padding:20px 16px 60px}
+.card{background:#111a2e;border-radius:12px;padding:20px;margin-bottom:14px;border:1px solid #1e2a44}
+.crumb{font-size:.82rem;color:#64748b;margin-bottom:14px;display:flex;gap:6px;flex-wrap:wrap}
+.crumb a{color:#00d4ff;cursor:pointer}
+.intro{background:#0c4a6e;padding:14px;border-radius:8px;margin:12px 0;border-left:4px solid #0ea5e9;font-style:italic;color:#bae6fd}
+.cours{line-height:1.7}
+.cours h3{color:#7dd3fc}
+.cours h4{color:#bae6fd}
+.cours .box{padding:12px;border-radius:8px;margin:10px 0;border-left:3px solid #fbbf24;background:#3a2a0a;color:#f5e3a8}
+.cours .warn{padding:12px;border-radius:8px;margin:10px 0;border-left:3px solid #ef4444;background:#3a0f0f;color:#f4c4c4}
+.cours .good{padding:12px;border-radius:8px;margin:10px 0;border-left:3px solid #22c55e;background:#0a3a1a;color:#a7f3c4}
+.cours .bank{padding:12px;border-radius:8px;margin:10px 0;border-left:3px solid #22c55e;background:#0d3a1f;color:#b5e8c8}
+.cours table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.88em}
+.cours th{background:#0f1729;color:#7dd3fc;padding:8px;text-align:left;border:1px solid #1e2a44}
+.cours td{border:1px solid #1e2a44;padding:8px;color:#cbd5e1}
+.quiz{background:#0a1220;padding:14px;border-radius:10px;margin-top:12px;border:1px solid #1e2a44}
+.q{margin-bottom:14px;padding:12px;background:#0f1729;border-radius:8px;border:1px solid #1e2a44}
+.q>p:first-child{font-weight:600;margin-bottom:10px;color:#e8eef7}
+.q label{display:block;padding:10px 12px;margin:5px 0;background:#111827;border-radius:7px;cursor:pointer;border:1.5px solid transparent;color:#cbd5e1;font-size:.9rem}
+.q label:hover{background:#1a2540}
+.q input{margin-right:10px}
+.ok{background:rgba(34,197,94,.2)!important;border-color:#22c55e!important;color:#a7f3c4!important}
+.ko{background:rgba(239,68,68,.2)!important;border-color:#ef4444!important;color:#fca5a5!important}
+.exp{background:#050914;padding:10px;border-radius:6px;margin-top:8px;font-size:.85em;color:#cbd5e1;border-left:3px solid #fbbf24;display:none}
+.res{margin-top:12px;padding:14px;border-radius:8px;font-weight:700;text-align:center}
+.res.g{background:rgba(34,197,94,.2);color:#a7f3c4;border:1px solid #22c55e}
+.res.r{background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid #ef4444}
+.nav{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:12px}
+.btn{background:#0f1729;padding:14px;border-radius:10px;cursor:pointer;border:2px solid transparent;text-align:left;transition:all .15s}
+.btn:hover{border-color:#0ea5e9}
+.btn.done{border-color:#22c55e;background:#0d3a1f}
+.btn .n{font-weight:800;color:#7dd3fc;display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:.5px}
+.btn.done .n{color:#86efac}
+.btn .ti{display:block;font-size:.88rem;color:#e8eef7;margin-top:5px;font-weight:600}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:14px 0}
+.stat{background:#111a2e;padding:16px;border-radius:12px;border:1px solid #1e2a44;text-align:center;border-top:3px solid #0ea5e9}
+.stat .big{font-size:2em;font-weight:800;color:#7dd3fc;display:block;line-height:1.1}
+.stat .lbl{font-size:.75em;color:#94a3b8;margin-top:6px;text-transform:uppercase;font-weight:600}
+.progress-bar{background:#0a1220;height:8px;border-radius:4px;overflow:hidden;margin:10px 0;border:1px solid #1e2a44}
+.progress-bar>div{height:100%;background:#0ea5e9;transition:width .5s}
+.login-box{max-width:400px;margin:50px auto;background:#111a2e;padding:30px;border-radius:16px;border:1px solid #1e2a44}
+.login-box h2{text-align:center;margin-bottom:16px}
+.login-box input{width:100%;padding:12px;margin:8px 0;background:#0a1220;border:1.5px solid #1e2a44;border-radius:9px;color:#e8eef7;font-size:.95rem;font-family:inherit}
+.login-box input:focus{outline:none;border-color:#0ea5e9}
+.login-box button{width:100%;margin-top:12px;padding:13px}
+.locked{text-align:center;padding:40px 20px;background:#0d1424;border-radius:14px;border:2px dashed #2a3a5c}
+.locked .icon{font-size:3.5em;margin-bottom:14px;opacity:.6}
+.locked h3{color:#fbbf24;font-size:1.2rem;margin:0 0 8px}
+.locked p{color:#94a3b8;font-size:.9rem}
+.locked .bar{width:180px;height:6px;background:#0a1220;border-radius:3px;margin:14px auto;overflow:hidden;border:1px solid #1e2a44}
+.locked .bar>div{height:100%;background:#0ea5e9}
+.cert{background:#0c4a6e;padding:36px 26px;border-radius:14px;border:3px double #0ea5e9;text-align:center}
+.cert .seal{width:70px;height:70px;border-radius:50%;background:#0ea5e9;display:flex;align-items:center;justify-content:center;font-size:1.9rem;margin:0 auto 16px;border:3px solid #bae6fd}
+.cert .sub{color:#7dd3fc;font-size:.72rem;letter-spacing:2.5px;text-transform:uppercase;font-weight:800;margin-bottom:6px}
+.cert .title{font-family:Georgia,serif;font-size:1.4rem;font-weight:700;color:#bae6fd;margin:6px 0 16px}
+.cert .name{font-family:Georgia,serif;font-size:1.8rem;font-weight:700;color:#fff;padding:14px 0;border-bottom:2px solid #0ea5e9;border-top:2px solid #0ea5e9;margin:10px auto 18px;max-width:360px}
+.cert .details{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;margin:20px 0 16px;font-size:.82rem;color:#94a3b8}
+.cert .details div{text-align:center}
+.cert .details strong{color:#00d4ff;display:block;font-size:.95rem;margin-top:3px}
+.cert .id{font-family:monospace;font-size:.7rem;color:#64748b;padding:8px;background:rgba(0,0,0,.3);border-radius:5px;display:inline-block;margin-top:12px}
+.cert .sig{margin-top:24px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.cert .sig-block{text-align:center;flex:1;min-width:140px}
+.cert .sig-line{border-top:1px solid #94a3b8;padding-top:6px;font-size:.75rem;color:#94a3b8;margin-top:24px}
+.cert .sig-name{font-family:Georgia,serif;font-style:italic;color:#7dd3fc;font-size:1rem}
+.cv-box{background:#fff;color:#1a1a1a;border-radius:12px;padding:30px;margin-top:14px;line-height:1.6}
+.cv-box h1{color:#0c4a6e;font-size:1.6rem;margin-bottom:4px}
+.cv-box .role{color:#0ea5e9;font-weight:600;margin-bottom:14px}
+.cv-box h2{color:#0c4a6e;font-size:.85rem;text-transform:uppercase;letter-spacing:1px;border-bottom:1.5px solid #cbd5e1;padding-bottom:4px;margin:16px 0 8px}
+.cv-box ul{padding-left:20px;margin:6px 0}
+.cv-box li{color:#334155;font-size:.9rem;margin-bottom:3px}
+.cv-box .badge{display:inline-block;padding:2px 8px;background:#e0f2fe;color:#0c4a6e;border-radius:10px;font-size:.75rem;font-weight:700;border:1px solid #bae6fd;margin:2px}
+.tabs{display:flex;gap:6px;margin:12px 0;flex-wrap:wrap}
+.tab{padding:8px 14px;background:#0f1729;border-radius:8px;cursor:pointer;font-size:.82em;font-weight:600;color:#94a3b8;border:1.5px solid transparent}
+.tab.active{background:#0ea5e9;color:#fff}
+.certs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-top:12px}
+.cert-item{background:#0f1729;padding:14px;border-radius:10px;border-left:4px solid #0ea5e9}
+.cert-item.free{border-left-color:#22c55e}
+.cert-item.paid{border-left-color:#fbbf24}
+.cert-item h4{margin:0 0 5px;font-size:.9em;color:#e8eef7}
+.cert-item .org{font-size:.72em;color:#94a3b8;margin-bottom:8px}
+.cert-item .tag{display:inline-block;padding:2px 8px;border-radius:16px;font-size:.66em;font-weight:700;margin-right:3px;margin-bottom:3px}
+.cert-item .tag.free{background:rgba(34,197,94,.15);color:#86efac}
+.cert-item .tag.paid{background:rgba(251,191,36,.15);color:#fde68a}
+.cert-item .tag.lvl{background:rgba(59,130,246,.15);color:#93c5fd}
+.cert-item p{font-size:.78em;color:#cbd5e1;margin:6px 0}
+.cert-item a{display:inline-block;padding:5px 10px;background:#1a2540;color:#00d4ff;border-radius:6px;font-size:.74em;font-weight:700;border:1px solid #2a3a5c;margin-top:6px}
+.jobs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:12px}
+.job{background:#0f1729;padding:14px;border-radius:10px;border-left:4px solid #22c55e}
+.job h4{margin:0 0 4px;color:#86efac;font-size:.9em}
+.job .org{font-size:.75em;color:#94a3b8;margin-bottom:6px}
+.job p{font-size:.8em;color:#cbd5e1;margin:6px 0}
+.job a{display:inline-block;padding:5px 12px;background:#1a2540;color:#00d4ff;border-radius:6px;font-size:.76em;font-weight:700;margin-top:6px;border:1px solid #2a3a5c}
+.exam{background:#0c4a6e;padding:16px;border-radius:12px;margin:10px 0;border-left:4px solid #0ea5e9}
+.exam h4{color:#bae6fd;margin:0 0 6px;font-size:.98rem}
+.exam.locked{opacity:.55;border-left-color:#475569}
+.exam.passed{background:#0d3a1f;border-left-color:#22c55e}
+.exam.passed h4{color:#86efac}
+.sync-box{background:#0a1220;padding:14px;border-radius:10px;margin:10px 0;border:1px solid #1e2a44}
+.sync-box textarea{width:100%;min-height:100px;background:#050914;color:#00d4ff;border:1px solid #1e2a44;border-radius:6px;padding:10px;font-family:monospace;font-size:.7em;resize:vertical;word-break:break-all}
+.sync-box label{display:block;margin:6px 0 4px;color:#94a3b8;font-size:.82em;font-weight:600}
+.today{list-style:none;padding:0;margin:10px 0}
+.today li{padding:10px 12px;background:#0f1729;border-radius:6px;margin-bottom:6px;border-left:3px solid #22c55e;font-size:.87em;color:#cbd5e1}
+footer{text-align:center;padding:24px 20px;color:#64748b;font-size:.8em;font-weight:600;border-top:1px solid #1e2a44;margin-top:32px}
+#ver{position:fixed;bottom:8px;right:8px;background:#0c4a6e;color:#7dd3fc;font-family:monospace;font-size:.7em;padding:4px 8px;border-radius:4px;border:1px solid #0ea5e9;z-index:999}
+#err{position:fixed;bottom:8px;left:8px;background:#3a0f0f;color:#fca5a5;font-family:monospace;font-size:.68em;padding:4px 8px;border-radius:4px;border:1px solid #ef4444;display:none;max-width:80%;z-index:999}
+@media print{header,footer,.nav,#ver,#err,.tabs,button{display:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo" onclick="go('home')">🔍 Mon Drôle Parcours · Niveau 8</div>
+  <div class="hs" id="hs"></div>
+</header>
+<main id="app"></main>
+<footer>© H. N'GUESSAN ® — Niveau 8 · Forensics</footer>
+<div id="ver">v8.0 chargé ✓</div>
+<div id="err"></div>
+
+<script>
+window.addEventListener('error', function(e) {
+  var el = document.getElementById('err');
+  if (el) { el.style.display = 'block'; el.textContent = 'ERREUR: ' + e.message; }
+});
+
+var KEY = 'mdpc_v80';
+var state = { currentUser: null, users: {} };
+try { var raw = localStorage.getItem(KEY); if (raw) state = JSON.parse(raw); } catch (e) {}
+
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} header(); }
+function user() { return state.currentUser ? state.users[state.currentUser] : null; }
+function mkUser(n) { return { name: n, done: {}, certs: [], examens: {}, jours: {}, created: new Date().toISOString().slice(0,10) }; }
+function today() { return new Date().toISOString().slice(0,10); }
+
+function countDone(lvl) {
+  var u = user(); if (!u) return 0;
+  var c = 0, p = lvl + '_';
+  for (var k in u.done) { if (k.indexOf(p) === 0 && u.done[k]) c++; }
+  return c;
+}
+function isComplete(lvl) { return countDone(lvl) >= 10; }
+function isUnlocked(lvl) { if (lvl === 1) return true; return isComplete(lvl - 1); }
+
+function simulate() {
+  var u = user(); if (!u) return;
+  for (var i = 1; i <= 10; i++) {
+    u.done['1_'+i]=true; u.done['2_'+i]=true; u.done['3_'+i]=true;
+    u.done['4_'+i]=true; u.done['5_'+i]=true; u.done['6_'+i]=true; u.done['7_'+i]=true;
+  }
+  save();
+  alert('N1-N7 simulés. Niveau 8 débloqué !');
+  route();
+}
+
+function login() {
+  var el = document.getElementById('loginName'); if (!el) return;
+  var n = el.value.trim(); if (!n) { alert('Entre ton prénom'); return; }
+  var k = n.toLowerCase().replace(/\s+/g, '_');
+  if (!state.users[k]) state.users[k] = mkUser(n);
+  state.currentUser = k; save(); go('home');
+}
+function logout() { state.currentUser = null; save(); go('login'); }
+function go(h) { location.hash = h; }
+
+/* ============================================================
+   10 DÉFIS — Forensics
+   ============================================================ */
+var DEFIS = [
+{id:1, titre:"Introduction au forensics numérique", intro:"Le forensics (investigation numérique) consiste à collecter et analyser des preuves numériques pour reconstituer un incident.",
+cours:"<h3>Qu est-ce que le forensics</h3><p><strong>Forensics</strong> = science de l investigation numérique. Objectif : reconstituer ce qui s est passé sur un système, avec des preuves recevables en justice.</p><h3>Les types</h3><table><tr><th>Type</th><th>Objet</th></tr><tr><td><strong>Disque</strong></td><td>Disques durs, SSD, USB</td></tr><tr><td><strong>Mémoire</strong></td><td>RAM</td></tr><tr><td><strong>Réseau</strong></td><td>PCAP, logs</td></tr><tr><td><strong>Mobile</strong></td><td>Android, iOS</td></tr><tr><td><strong>Cloud</strong></td><td>AWS, Azure, M365</td></tr><tr><td><strong>Email</strong></td><td>PST, EML</td></tr></table><h3>Objectifs</h3><ul><li>Identifier la cause de l incident</li><li>Déterminer l étendue de la compromission</li><li>Identifier les auteurs</li><li>Préserver les preuves pour la justice</li><li>Documenter pour l assurance</li></ul><h3>Principe de Locard</h3><p>« Tout contact laisse une trace ». Un attaquant laisse TOUJOURS des traces (logs, fichiers, mémoire, réseau).</p><div class=\"box\">Un crime numérique = scène de crime physique. On ne touche à rien avant d avoir photographié et prélevé.</div><div class=\"bank\">Banques : forensics obligatoire après un incident. Preuves exigées par BCEAO, PCI-DSS, la justice.</div><div class=\"warn\">Toute manipulation sur la machine compromise détruit des preuves. Isoler immédiatement.</div>",
+cas:"<h3>Cas 1 — Premier réflexe après incident</h3><ol><li>Ne PAS éteindre la machine</li><li>Débrancher le câble réseau (isolation)</li><li>Photographier l écran</li><li>Noter date/heure</li><li>Contacter l équipe forensics</li><li>Documenter chaque action (chaîne de custody)</li></ol><h3>Cas 2 — Types d investigation</h3><ul><li>Ransomware : identifier le malware, chercher la clé de chiffrement en RAM</li><li>Fraude bancaire : analyser logs, transactions, accès</li><li>Espionnage : analyser exfiltration, IPs, mails</li><li>Attaque externe : analyser firewall, IDS, PCAP</li></ul><h3>Cas 3 — Ordre de volatilité</h3><ol><li>RAM et registres CPU (perdus en secondes)</li><li>Cache, swap, connexions réseau (minutes)</li><li>Disque dur (persistant)</li><li>Logs distants (jours)</li><li>Sauvegardes, archives (mois)</li></ol>",
+quiz:[
+{q:'Forensics signifie ?',o:['Investigation numérique','Antivirus','Chiffrement','Pare-feu'],c:0,e:'Investigation.'},
+{q:'Principe de Locard ?',o:['Tout contact laisse une trace','Pas de trace','Tout s efface','Rien à voir'],c:0,e:'Trace.'}
+]},
+
+{id:2, titre:"Cadre légal et chaîne de custody", intro:"Une preuve numérique doit être recevable en justice. Sans procédure stricte, elle est rejetée.",
+cours:"<h3>Chaîne de custody</h3><p>La <strong>chaîne de custody</strong> (chaîne de possession) documente qui a touché la preuve, quand, comment. Une rupture = preuve rejetée.</p><h3>Éléments à documenter</h3><ul><li><strong>Qui</strong> — nom, fonction, signature</li><li><strong>Quoi</strong> — description de la preuve (hash SHA-256)</li><li><strong>Quand</strong> — date et heure exactes</li><li><strong>Où</strong> — lieu de saisie</li><li><strong>Comment</strong> — méthode utilisée (outil, procédure)</li><li><strong>Pourquoi</strong> — raison de la saisie</li></ul><h3>Règles d or</h3><ul><li><strong>Ne jamais travailler sur l original</strong> — toujours sur une copie bit-à-bit</li><li><strong>Hasher chaque preuve</strong> — SHA-256, MD5 (double hash)</li><li><strong>Hasher après chaque transfert</strong> — vérifier intégrité</li><li><strong>Isoler les preuves</strong> — sacs anti-statique, pièces sécurisées</li><li><strong>Filmer la scène</strong> — photos, vidéo</li><li><strong>Faire signer</strong> — chaque intervenant signe</li></ul><h3>Cadre légal en Côte d Ivoire</h3><ul><li>Code pénal (article 323 et suivants) — accès frauduleux, atteinte aux STAD</li><li>Loi 2013-450 relative à la protection des données personnelles</li><li>ARTCI — autorité de régulation</li><li>PLCC — Plateforme de Lutte contre la Cybercriminalité</li></ul><h3>Pièges fréquents</h3><ul><li>Démarrer la machine → destruction de preuves en RAM</li><li>Copier les fichiers avec l explorateur → modification des timestamps</li><li>Ouvrir les fichiers → modification du hash</li><li>Oublier de hasher → preuve non recevable</li></ul><div class=\"box\">Une preuve sans chaîne de custody = un ticket de loto sans numéro. Inutile devant le juge.</div><div class=\"bank\">BCEAO impose une procédure forensics documentée. Chaque incident doit avoir un rapport signé conservé 5 ans minimum.</div><div class=\"warn\">Les enquêteurs non formés détruisent souvent les preuves en 5 minutes. Faire appel à un expert dès le début.</div>",
+cas:"<h3>Cas 1 — Formulaire de custody</h3><table><tr><th>Champ</th><th>Exemple</th></tr><tr><td>N° preuve</td><td>EVD-2024-001</td></tr><tr><td>Description</td><td>Disque dur Samsung 500 Go, S/N XYZ123</td></tr><tr><td>Hash SHA-256</td><td>e3b0c44298fc...</td></tr><tr><td>Lieu</td><td>Agence BNI Plateau, salle serveur</td></tr><tr><td>Date/heure</td><td>2024-03-15 14:32 UTC</td></tr><tr><td>Saisi par</td><td>H. N GUESSAN, expert forensics</td></tr><tr><td>Témoin</td><td>M. Koffi, RSSI adjoint</td></tr><tr><td>Transferts</td><td>15/03 → Labo (signature)</td></tr><tr><td>Analyse</td><td>16/03 → poste isolé (signature)</td></tr></table><h3>Cas 2 — Image disque</h3><pre>dcfldd if=/dev/sdb of=evidence.dd hash=sha256 hashlog=evidence.hash</pre><p>Ou : <code>dd if=/dev/sdb of=evidence.dd bs=4M</code> puis <code>sha256sum evidence.dd</code></p><h3>Cas 3 — Vérifier l intégrité</h3><pre>sha256sum evidence.dd\n# comparer avec le hash d origine</pre>",
+quiz:[
+{q:'Chaîne de custody ?',o:['Antivirus','Documentation preuves','Chiffrement','Pare-feu'],c:1,e:'Documentation.'},
+{q:'Travaille-t-on sur l original ?',o:['Oui','Non, sur copie bit-à-bit','Peu importe','Parfois'],c:1,e:'Jamais l original.'}
+]},
+
+{id:3, titre:"Acquisition de preuves — Imagerie disque", intro:"La première étape technique : copier le disque bit-à-bit sans modifier l original.",
+cours:"<h3>Pourquoi imager</h3><p>Un disque peut être modifié à chaque accès. L imagerie crée une copie <strong>bit-à-bit</strong> identique, sur laquelle on travaille.</p><h3>Types d acquisition</h3><ul><li><strong>Physique</strong> — copie complète du disque (bit-à-bit)</li><li><strong>Logique</strong> — copie des fichiers (moins fiable)</li><li><strong>Live</strong> — copie d un système en cours d exécution (risqué)</li></ul><h3>Outils</h3><table><tr><th>Outil</th><th>OS</th><th>Usage</th></tr><tr><td>dd</td><td>Linux</td><td>Image brute</td></tr><tr><td>dcfldd</td><td>Linux</td><td>dd + hash intégré</td></tr><tr><td>FTK Imager</td><td>Windows</td><td>GUI, expert</td></tr><tr><td>Guymager</td><td>Linux</td><td>GUI, rapide</td></tr><tr><td>EnCase</td><td>Windows</td><td>Commercial</td></tr><tr><td>Magnet AXIOM</td><td>Windows</td><td>Commercial, tout-en-un</td></tr></table><h3>Formats d image</h3><ul><li><strong>Raw (.dd, .img)</strong> — copie brute</li><li><strong>E01 (EnCase)</strong> — compressé, métadonnées, hash</li><li><strong>AFF</strong> — Advanced Forensic Format</li><li><strong>VMDK</strong> — image VM</li></ul><h3>Bonnes pratiques</h3><ul><li><strong>Bloqueur en écriture</strong> — empêche la modification du disque source</li><li><strong>Hash avant et après</strong> — vérifier l intégrité</li><li><strong>Journal d acquisition</strong> — documenter</li><li><strong>Copie multiple</strong> — 3 copies recommandées (travailler, backup, justice)</li></ul><div class=\"box\">Imager un disque = photographier une scène de crime. On ne touche pas à l original, on fige l état.</div><div class=\"bank\">Banques : 3 copies d image + 1 copie hors site. Une copie pour l analyse, une pour l assurance, une pour la justice.</div><div class=\"warn\">Sans bloqueur en écriture, l OS peut modifier le disque pendant la copie. Preuve compromise.</div>",
+cas:"<h3>Cas 1 — dd sous Linux</h3><pre>sudo dd if=/dev/sdb of=/mnt/evidence/disk.dd bs=4M status=progress\nsha256sum /dev/sdb &gt; hash_original.txt\nsha256sum /mnt/evidence/disk.dd &gt; hash_image.txt\ndiff hash_original.txt hash_image.txt</pre><p>Si aucun diff → image intègre.</p><h3>Cas 2 — FTK Imager</h3><ol><li>File → Create Disk Image</li><li>Sélectionner la source (disque physique)</li><li>Choisir format E01</li><li>Destination (disque externe)</li><li>Vérifier le hash</li><li>Start</li></ol><h3>Cas 3 — Montage en lecture seule</h3><pre>sudo mount -o ro,loop,offset=1048576 disk.dd /mnt/case</pre><p>Monter l image en lecture seule pour ne pas la modifier.</p>",
+quiz:[
+{q:'Acquisition physique ?',o:['Copie fichiers','Copie bit-à-bit','Chiffrement','Hash seul'],c:1,e:'Bit-à-bit.'},
+{q:'Bloqueur en écriture ?',o:['Empêche modification','Accélère','Chiffre','Route'],c:0,e:'Protection.'}
+]},
+
+{id:4, titre:"Analyse disque — Autopsy et SleuthKit", intro:"Analyser une image disque : retrouver fichiers supprimés, reconstituer timeline, identifier activité.",
+cours:"<h3>Outils d analyse disque</h3><table><tr><th>Outil</th><th>Usage</th></tr><tr><td>Autopsy</td><td>GUI gratuite, référence</td></tr><tr><td>FTK</td><td>Commercial, puissant</td></tr><tr><td>SleuthKit</td><td>Suite CLI (mmls, fls, icat)</td></tr><tr><td>The Hive</td><td>Analyse registre Windows</td></tr><tr><td>Volatility</td><td>RAM (autre niveau)</td></tr><tr><td>photorec</td><td>Récupération fichiers</td></tr></table><h3>Ce qu on cherche</h3><ul><li><strong>Fichiers supprimés</strong> — encore récupérables</li><li><strong>Timeline</strong> — chronologie des événements</li><li><strong>Web history</strong> — sites visités</li><li><strong>Emails</strong> — communications</li><li><strong>Documents</strong> — créés/modifiés</li><li><strong>USB</strong> — clés branchées</li><li><strong>Exécutions</strong> — programmes lancés</li></ul><h3>Systèmes de fichiers</h3><ul><li><strong>NTFS</strong> — Windows (MFT, $LogFile, $UsnJrnl)</li><li><strong>FAT32/exFAT</strong> — USB, cartes SD</li><li><strong>ext4</strong> — Linux (journal, inodes)</li><li><strong>APFS</strong> — macOS</li></ul><h3>MFT (Master File Table)</h3><p>Base de données NTFS qui contient tous les fichiers (même supprimés). Source d information majeure.</p><h3>Timeline</h3><p>Reconstituer l ordre chronologique : création, modification, accès, changement de métadonnées. 4 timestamps MACB.</p><div class=\"box\">Un disque = une bibliothèque. Chaque livre a une fiche (MFT). Même brûlé, la fiche reste. Autopsy lit les fiches.</div><div class=\"bank\">Analyse disque révèle souvent : fichiers exfiltrés, USB utilisées, sites visités, emails envoyés.</div><div class=\"warn\">Un fichier « supprimé » sur SSD peut être TRIM → effacement physique. Agir vite.</div>",
+cas:"<h3>Cas 1 — Autopsy</h3><ol><li>Créer un nouveau case</li><li>Ajouter l image disque (Add Data Source)</li><li>Ingest Modules : hash lookup, keyword search, timeline</li><li>Analyser résultats : files, deleted files, web history, USB</li></ol><h3>Cas 2 — SleuthKit CLI</h3><pre>mmls disk.dd             # partitions\nfls -r -p -o 1048576 disk.dd   # lister fichiers\nicat -o 1048576 disk.dd 12345 &gt; fichier_recover.bin   # extraire inode\n</pre><h3>Cas 3 — Timeline</h3><pre>fls -r -m / -o 1048576 disk.dd &gt; body.txt\nmactime -b body.txt -d 2024-03-15 &gt; timeline.csv</pre><p>Résultat : timeline jour par jour.</p>",
+quiz:[
+{q:'Autopsy sert à ?',o:['Scanner réseau','Analyser disque','Cracker mdp','Router'],c:1,e:'Disque.'},
+{q:'MFT contient ?',o:['Fichiers NTFS','Réseau','CPU','Rien'],c:0,e:'Fichiers.'}
+]},
+
+{id:5, titre:"Forensics Windows — Event Logs et registre", intro:"Windows laisse des traces partout : Event Logs, registre, prefetch, amcache. Savoir les lire est essentiel.",
+cours:"<h3>Event Logs essentiels</h3><table><tr><th>Event ID</th><th>Signification</th></tr><tr><td>4624</td><td>Connexion réussie</td></tr><tr><td>4625</td><td>Échec de connexion</td></tr><tr><td>4634</td><td>Déconnexion</td></tr><tr><td>4648</td><td>Connexion avec credentials explicites</td></tr><tr><td>4672</td><td>Privilèges admin accordés</td></tr><tr><td>4688</td><td>Processus créé</td></tr><tr><td>4720</td><td>Compte créé</td></tr><tr><td>4732</td><td>Compte ajouté à groupe</td></tr><tr><td>1102</td><td>Logs effacés (suspect)</td></tr><tr><td>7045</td><td>Service installé</td></tr></table><h3>Registre Windows</h3><ul><li><strong>Run keys</strong> — persistance : <code>HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run</code></li><li><strong>Services</strong> — <code>HKLM\\SYSTEM\\CurrentControlSet\\Services</code></li><li><strong>USB history</strong> — <code>HKLM\\SYSTEM\\CurrentControlSet\\Enum\\USBSTOR</code></li><li><strong>Recent docs</strong> — <code>HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\RecentDocs</code></li><li><strong>UserAssist</strong> — programmes GUI lancés</li></ul><h3>Prefetch</h3><p><code>C:\\Windows\\Prefetch\\</code> — fichiers .pf montrant les exécutions de programmes avec timestamps.</p><h3>Amcache</h3><p><code>C:\\Windows\\AppCompat\\Programs\\Amcache.hve</code> — historique des exécutions.</p><h3>SRUM</h3><p>System Resource Usage Monitor — usage réseau par application (exfiltration).</p><h3>Outils</h3><ul><li><strong>Event Viewer</strong> — GUI natif</li><li><strong>EvtxECmd</strong> — parser EVTX</li><li><strong>RegRipper</strong> — analyse registre</li><li><strong>PECmd</strong> — prefetch</li><li><strong>Eric Zimmerman Tools</strong> — suite complète</li><li><strong>KAPE</strong> — collecte automatique</li></ul><div class=\"box\">Windows est un bavard. Il note TOUT : chaque connexion, programme, USB, fichier ouvert. Il suffit de savoir où regarder.</div><div class=\"bank\">Analyste bancaire : Event 4625 en masse = brute force. 1102 = attaquant qui efface ses traces. USBSTOR = fuite par clé USB.</div><div class=\"warn\">Event 1102 (logs effacés) est TRÈS suspect. Un admin légitime prévient avant. Un attaquant efface en silence.</div>",
+cas:"<h3>Cas 1 — Détecter une brute force</h3><ol><li>Event Viewer → Security</li><li>Filtrer Event 4625 (échecs)</li><li>Compter par IP source sur 1h</li><li>Si &gt; 50 échecs d une IP → brute force</li><li>Event 4624 suivant → succès après brute force</li></ol><h3>Cas 2 — Trace USB</h3><pre>reg query HKLM\\SYSTEM\\CurrentControlSet\\Enum\\USBSTOR /s</pre><p>Liste toutes les clés USB branchées avec S/N et date.</p><h3>Cas 3 — Détecter persistance</h3><pre>reg query HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\nreg query HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run</pre><p>Entrée suspecte = persistance. Comparer avec une baseline.</p>",
+quiz:[
+{q:'Event 4625 ?',o:['Connexion réussie','Échec connexion','Déconnexion','Processus'],c:1,e:'Échec.'},
+{q:'USBSTOR contient ?',o:['USB branchées','Réseau','CPU','Emails'],c:0,e:'USB.'}
+]},
+
+{id:6, titre:"Forensics Linux — logs et traces", intro:"Linux laisse moins de traces que Windows mais elles sont cruciales. Logs, bash history, journal systemd.",
+cours:"<h3>Logs essentiels</h3><table><tr><th>Fichier</th><th>Contenu</th></tr><tr><td>/var/log/auth.log</td><td>Authentifications (SSH, sudo)</td></tr><tr><td>/var/log/syslog</td><td>Système général</td></tr><tr><td>/var/log/kern.log</td><td>Kernel</td></tr><tr><td>/var/log/apache2/</td><td>Web (access + error)</td></tr><tr><td>/var/log/mysql/</td><td>Base de données</td></tr><tr><td>~/.bash_history</td><td>Commandes exécutées</td></tr><tr><td>~/.ssh/authorized_keys</td><td>Clés SSH autorisées</td></tr></table><h3>Journal systemd</h3><pre>journalctl -u ssh\njournalctl --since \"2024-03-15\"\njournalctl -p err</pre><h3>Traces d exécution</h3><ul><li><strong>~/.bash_history</strong> — commandes tapées</li><li><strong>/root/.bash_history</strong> — commandes root</li><li><strong>~/.zsh_history</strong> — zsh</li><li><strong>/var/log/auth.log</strong> — SSH login/fail</li><li><strong>last</strong> — dernières connexions</li><li><strong>lastlog</strong> — dernières connexions par user</li><li><strong>lastb</strong> — échecs</li></ul><h3>Crontab</h3><pre>crontab -l\ncat /etc/crontab\nls /etc/cron.*/</pre><p>Un attaquant ajoute souvent une entrée cron pour la persistance.</p><h3>Services systemd</h3><pre>systemctl list-units --type=service\ncat /etc/systemd/system/*.service</pre><h3>Fichiers récemment modifiés</h3><pre>find / -mtime -1 -type f 2&gt;/dev/null</pre><h3>Comptes créés</h3><pre>cat /etc/passwd | awk -F: '$3&gt;=1000'</pre><p>Comparer avec la baseline.</p><div class=\"box\">Linux parle moins mais ne se tait pas. Bash history + auth.log racontent 90% de l histoire.</div><div class=\"bank\">Auth.log en banque : échecs SSH massifs = brute force. Success depuis IP inconnue = compromission.</div><div class=\"warn\">L attaquant efface souvent bash_history (rm ~/.bash_history, echo &gt; ~/.bash_history). Utiliser /var/log/auth.log comme backup.</div>",
+cas:"<h3>Cas 1 — Chercher une compromission SSH</h3><pre>grep \"Failed password\" /var/log/auth.log | awk '{print $11}' | sort | uniq -c | sort -rn\n</pre><p>IP avec &gt; 100 échecs = brute force. Chercher si succès après :</p><pre>grep \"Accepted password\\|Accepted publickey\" /var/log/auth.log</pre><h3>Cas 2 — Chercher persistance cron</h3><pre>cat /etc/crontab\nls -la /etc/cron.*/\ncat /var/spool/cron/crontabs/*</pre><p>Script inconnu exécuté par root = persistance.</p><h3>Cas 3 — Bash history</h3><pre>cat /home/user/.bash_history\ncat /root/.bash_history</pre><p>Chercher : wget, curl, nc, chmod +x, ./shell, base64, crontab -e</p>",
+quiz:[
+{q:'auth.log contient ?',o:['Authentifications','Emails','Fichiers','Réseau'],c:0,e:'Auth.'},
+{q:'Bash history ?',o:['Commandes tapées','Hash','Certificat','Rien'],c:0,e:'Commandes.'}
+]},
+
+{id:7, titre:"Forensics mémoire — Volatility en pratique", intro:"La RAM contient ce que le disque cache : processus, clés, mots de passe, connexions.",
+cours:"<h3>Pourquoi la RAM</h3><ul><li>Malware fileless (jamais sur disque)</li><li>Clés de chiffrement (ransomware)</li><li>Mots de passe en clair</li><li>Processus cachés</li><li>Connexions réseau actives (C2)</li></ul><h3>Capture RAM</h3><ul><li><strong>Windows</strong> : DumpIt, WinPmem, FTK Imager</li><li><strong>Linux</strong> : LiME, /proc/kcore</li><li><strong>VM</strong> : snapshot VMware/VirtualBox</li></ul><h3>Volatility 3</h3><pre>vol -f memory.dmp windows.pslist\nvol -f memory.dmp windows.netscan\nvol -f memory.dmp windows.cmdline\nvol -f memory.dmp windows.malfind\nvol -f memory.dmp windows.hashdump\nvol -f memory.dmp windows.dlllist</pre><h3>Commandes clés</h3><table><tr><th>Commande</th><th>Usage</th></tr><tr><td>pslist</td><td>Processus actifs</td></tr><tr><td>psscan</td><td>Processus cachés (comparer avec pslist)</td></tr><tr><td>netscan</td><td>Connexions réseau</td></tr><tr><td>cmdline</td><td>Ligne de commande</td></tr><tr><td>malfind</td><td>Code injecté</td></tr><tr><td>hashdump</td><td>Hashs Windows</td></tr><tr><td>dlllist</td><td>DLLs chargées</td></tr><tr><td>handles</td><td>Fichiers ouverts</td></tr></table><h3>Détecter rootkit</h3><p>Un processus dans <code>psscan</code> mais pas <code>pslist</code> = processus caché (rootkit probable).</p><h3>Détecter injection</h3><p><code>malfind</code> détecte code injecté (signature MZ dans régions non exécutables).</p><div class=\"box\">RAM = scène de crime vivante. Le malware efface le disque, pas la RAM. Agir vite.</div><div class=\"bank\">Après ransomware : chercher la clé AES en RAM avec Volatility + plugins dédiés (CryptoSearch, Shimit).</div><div class=\"warn\">La RAM se dégrade : à chaque écriture, l ancien contenu s efface. Capturer IMMÉDIATEMENT.</div>",
+cas:"<h3>Cas 1 — Détecter processus caché</h3><pre>vol -f memory.dmp windows.pslist &gt; pslist.txt\nvol -f memory.dmp windows.psscan &gt; psscan.txt\ndiff pslist.txt psscan.txt</pre><p>Un PID dans psscan absent de pslist = caché.</p><h3>Cas 2 — Chercher C2</h3><pre>vol -f memory.dmp windows.netscan | grep ESTABLISHED</pre><p>Corréler IPs avec VirusTotal.</p><h3>Cas 3 — malfind</h3><pre>vol -f memory.dmp windows.malfind</pre><p>Signatures MZ injectées = suspect.</p>",
+quiz:[
+{q:'Volatility analyse ?',o:['Disque','RAM','Réseau','CPU'],c:1,e:'RAM.'},
+{q:'malfind détecte ?',o:['Code injecté','USB','Réseau','Crypto'],c:0,e:'Injection.'}
+]},
+
+{id:8, titre:"Forensics réseau — PCAP et logs", intro:"Analyser les paquets réseau (PCAP) permet de reconstituer une attaque, une exfiltration ou un C2.",
+cours:"<h3>Sources de données réseau</h3><ul><li><strong>PCAP</strong> — capture de paquets (Wireshark, tcpdump)</li><li><strong>Firewall logs</strong> — connexions autorisées/bloquées</li><li><strong>IDS/IPS logs</strong> — alertes Suricata, Snort</li><li><strong>Proxy logs</strong> — URLs, user-agents</li><li><strong>DNS logs</strong> — domaines résolus</li><li><strong>NetFlow</strong> — flux réseau résumés</li></ul><h3>Wireshark</h3><p>Analyse PCAP. Filtres essentiels :</p><pre>ip.addr == 192.168.1.10\ntcp.port == 443\nhttp.request\ndns.qry.name contains \"malicious\"\ntcp.flags.syn == 1 &amp;&amp; tcp.flags.ack == 0</pre><h3>tcpdump (CLI)</h3><pre>tcpdump -i eth0 -w capture.pcap\ntcpdump -r capture.pcap -nn 'port 443'</pre><h3>Ce qu on cherche</h3><ul><li><strong>Connexions C2</strong> — IPs/domaines inconnus</li><li><strong>Exfiltration</strong> — sorties volumineuses</li><li><strong>Scan de ports</strong> — SYNs massifs vers différents ports</li><li><strong>Brute force</strong> — tentatives répétées</li><li><strong>Malware download</strong> — User-Agent bizarre, contenu PE</li><li><strong>DNS tunneling</strong> — requêtes DNS anormales</li></ul><h3>Extraire un fichier d un PCAP</h3><p>Wireshark → File → Export Objects → HTTP</p><p>Ou : <code>tcpflow -r capture.pcap</code></p><h3>Détection de beaconing</h3><p>Un malware C2 « beacon » régulièrement (toutes les X secondes). Analyser les intervalles réguliers.</p><div class=\"box\">Le réseau est le fil conducteur. Le malware peut se cacher sur disque, il doit sortir par le réseau pour communiquer. Intercepter = comprendre.</div><div class=\"bank\">Banque : PCAP révèle C2, exfiltration de données clients, transferts frauduleux. Essentiel post-incident.</div><div class=\"warn\">Sans PCAP pré-capturé, on ne peut pas revenir en arrière. Activer la capture continue en banque (NetFlow au minimum).</div>",
+cas:"<h3>Cas 1 — Chercher un C2</h3><ol><li>Ouvrir le PCAP dans Wireshark</li><li>Statistics → Conversations</li><li>Trier par octets</li><li>Repérer IPs inconnues avec beaucoup de trafic</li><li>Vérifier sur VirusTotal</li></ol><h3>Cas 2 — Extraire un binaire téléchargé</h3><p>Wireshark → File → Export Objects → HTTP → sélectionner le fichier suspect → Save → analyser en sandbox.</p><h3>Cas 3 — Détecter DNS tunneling</h3><pre>dns.qry.name contains \"evil.com\"</pre><p>Requêtes DNS vers un domaine unique avec sous-domaines très longs (base64) = tunneling.</p>",
+quiz:[
+{q:'PCAP contient ?',o:['Paquets réseau','Fichiers','Registre','RAM'],c:0,e:'Paquets.'},
+{q:'Beaconing ?',o:['Communication régulière malware','Chiffrement','Antivirus','Scan'],c:0,e:'Beacon.'}
+]},
+
+{id:9, titre:"Forensics mobile — Android et iOS", intro:"Les smartphones contiennent énormément de données. Analyser un mobile compromis est une discipline à part.",
+cours:"<h3>Android</h3><ul><li><strong>Système de fichiers</strong> : ext4, f2fs</li><li><strong>Chiffrement</strong> : Full Disk Encryption (FDE) ou File Based (FBE)</li><li><strong>Stockage</strong> : /data/data (apps), /sdcard</li><li><strong>Backups</strong> : adb backup (limité sur versions récentes)</li></ul><h3>iOS</h3><ul><li><strong>Système de fichiers</strong> : APFS</li><li><strong>Chiffrement</strong> : toujours activé</li><li><strong>Stockage</strong> : sandbox par app</li><li><strong>Backups</strong> : iTunes (chiffré ou non), iCloud</li></ul><h3>Sources de données mobile</h3><ul><li>SMS, MMS, iMessage</li><li>WhatsApp, Signal, Telegram</li><li>Call logs</li><li>Contacts</li><li>Photos et vidéos (avec GPS EXIF)</li><li>Localisation (GPS history)</li><li>Navigateurs web</li><li>Emails</li><li>Applications bancaires (historique)</li><li>Cache réseaux sociaux</li></ul><h3>Outils</h3><ul><li><strong>Cellebrite UFED</strong> — référence commerciale</li><li><strong>Magnet AXIOM</strong> — extraction + analyse</li><li><strong>Oxygen Forensic</strong></li><li><strong>MobSF</strong> — analyse statique d APK (gratuit)</li><li><strong>adb</strong> — Android CLI</li><li><strong>libimobiledevice</strong> — iOS CLI</li></ul><h3>Extraction</h3><ul><li><strong>Manuelle</strong> — avec le code PIN</li><li><strong>Logique</strong> — via ADB/iTunes</li><li><strong>Physique</strong> — dump complet (root requis)</li><li><strong>Chip-off</strong> — dessouder la mémoire (extrême)</li></ul><div class=\"box\">Un smartphone = un ordinateur de poche + caméra + micro + GPS. En forensics, c est un trésor d informations.</div><div class=\"bank\">Fraude bancaire mobile : analyser l app banking compromises, SMS OTP volés, accès à distance (TeamViewer, AnyDesk).</div><div class=\"warn\">Ne jamais allumer un téléphone saisi : un remote wipe peut effacer tout. Mode avion + Faraday bag.</div>",
+cas:"<h3>Cas 1 — Extraction ADB</h3><pre>adb devices\nadb backup -apk -shared -all -f backup.ab\n</pre><p>Puis convertir avec <code>abe.jar</code> en tar.</p><h3>Cas 2 — Analyser un APK suspect</h3><pre>apktool d suspect.apk\ncat suspect/res/values/strings.xml | grep http</pre><p>Ou MobSF (Docker) : interface web complète.</p><h3>Cas 3 — Faraday bag</h3><p>Placer le téléphone saisi dans une poche anti-ondes (Faraday). Empêche : remote wipe, connexion C2, modifications à distance.</p>",
+quiz:[
+{q:'Faraday bag empêche ?',o:['Remote wipe','Photos','Batterie','GPS'],c:0,e:'Wipe à distance.'},
+{q:'Cellebrite est ?',o:['Antivirus','Outil forensics mobile','Chiffrement','Pare-feu'],c:1,e:'Forensics mobile.'}
+]},
+
+{id:10, titre:"Rapport forensics et témoignage", intro:"Le rapport est le livrable final. Il doit être clair, factuel, et recevable en justice.",
+cours:"<h3>Structure du rapport</h3><ol><li><strong>Page de garde</strong> — numéro dossier, date, expert, classification</li><li><strong>Contexte</strong> — mandat, périmètre, dates</li><li><strong>Résumé exécutif</strong> — 1 page non technique</li><li><strong>Méthodologie</strong> — outils, procédures, hash</li><li><strong>Chaîne de custody</strong> — tableau complet</li><li><strong>Findings</strong> — découvertes factuelles</li><li><strong>Timeline</strong> — chronologie de l incident</li><li><strong>Conclusion</strong> — réponse au mandat</li><li><strong>Annexes</strong> — hash, logs, captures</li></ol><h3>Règles d or</h3><ul><li><strong>Factuel</strong> — pas d opinion, pas de supposition</li><li><strong>Reproductible</strong> — un autre expert doit pouvoir refaire</li><li><strong>Traçable</strong> — chaque conclusion liée à une preuve</li><li><strong>Impartial</strong> — ne pas favoriser le client</li><li><strong>Hasher tout</strong> — chaque fichier de preuve</li></ul><h3>Éviter les pièges</h3><ul><li>« Le suspect a fait X » → « Un utilisateur avec ces credentials a fait X à HH:MM »</li><li>« Le malware a exfiltré des données » → « Une connexion sortante de X Go vers IP Y a été observée à HH:MM »</li><li>Pas de jargon excessif — expliquer les termes</li></ul><h3>Témoignage au tribunal</h3><ul><li>Prêter serment — dire la vérité</li><li>Expliquer sa méthode au juge</li><li>Présenter les preuves hashées</li><li>Ne pas dépasser son domaine d expertise</li><li>Reconnaître l incertitude si nécessaire</li></ul><h3>Conservation</h3><ul><li>Preuves conservées 5-10 ans (selon juridiction)</li><li>Copies sécurisées, hasher régulièrement</li><li>Accès journalisé</li><li>Destruction documentée en fin de dossier</li></ul><div class=\"box\">Un rapport forensics = une déposition sous serment. Chaque phrase doit être vérifiable. Pas de place pour les impressions.</div><div class=\"bank\">BCEAO exige un rapport signé par expert + RSSI après tout incident. Conservé 5 ans minimum. Auditable.</div><div class=\"warn\">Un rapport truqué ou inexact = nullité de la procédure + poursuites contre l expert.</div>",
+cas:"<h3>Cas 1 — Résumé exécutif</h3><p>Exemple : « Le 15 mars 2024 à 14h32, un ransomware a chiffré 412 fichiers sur le serveur SRV-APP-01. L analyse forensics a identifié le malware comme étant LockBit 3.0. Aucune exfiltration de données n a été détectée. Les sauvegardes hors site sont intactes. »</p><h3>Cas 2 — Timeline (extrait)</h3><table><tr><th>Heure</th><th>Événement</th><th>Source</th></tr><tr><td>14:30:22</td><td>Connexion RDP depuis 185.x.x.x</td><td>Event 4624</td></tr><tr><td>14:31:05</td><td>Création compte « admin2 »</td><td>Event 4720</td></tr><tr><td>14:32:11</td><td>Exécution powershell -enc</td><td>Event 4688</td></tr><tr><td>14:32:45</td><td>Premier fichier chiffré</td><td>MFT</td></tr><tr><td>14:33:10</td><td>README.txt créé</td><td>File system</td></tr></table><h3>Cas 3 — Témoignage</h3><p>Question du juge : « Êtes-vous certain que c est le suspect ? »</p><p>Bonne réponse : « Je peux affirmer que la connexion RDP à 14h30 provenait de l IP 185.x.x.x. Je ne peux pas affirmer qui était physiquement derrière ce clavier. »</p>",
+quiz:[
+{q:'Rapport forensics doit être ?',o:['Factuel et reproductible','Opinion','Court','Secret'],c:0,e:'Factuel.'},
+{q:'Témoignage doit être ?',o:['Sous serment','Improvisé','Court','Secret'],c:0,e:'Serment.'}
+]}
+];
+
+var CERTS = [
+{id:'cyberdef', nom:'CyberDefenders', org:'CyberDefenders', free:true, niv:'Intermédiaire', lien:'https://cyberdefenders.org/', desc:'Challenges forensics.'},
+{id:'letsdefend', nom:'LetsDefend', org:'LetsDefend', free:true, niv:'Intermédiaire', lien:'https://letsdefend.io/', desc:'Simulateur SOC.'},
+{id:'tryhackme-df', nom:'Digital Forensics', org:'TryHackMe', free:true, niv:'Intermédiaire', lien:'https://tryhackme.com/module/digital-forensics', desc:'Labs forensics.'},
+{id:'comptia-cysa', nom:'CompTIA CySA+', org:'CompTIA', free:false, prix:'~404 USD', niv:'Intermédiaire+', lien:'https://www.comptia.org/certifications/cybersecurity-analyst', desc:'Analyste SOC.'},
+{id:'giac-gcfa', nom:'GCFA', org:'SANS/GIAC', free:false, prix:'~2000 USD', niv:'Avancé', lien:'https://www.giac.org/certifications/certified-forensic-analyst-gcfa/', desc:'Forensic Analyst.'},
+{id:'giac-gcfe', nom:'GCFE', org:'SANS/GIAC', free:false, prix:'~2000 USD', niv:'Avancé', lien:'https://www.giac.org/certifications/certified-forensic-examiner-gcfe/', desc:'Forensic Examiner.'},
+{id:'giac-gcih', nom:'GCIH', org:'SANS/GIAC', free:false, prix:'~2000 USD', niv:'Avancé', lien:'https://www.giac.org/certifications/certified-incident-handler-gcih/', desc:'Incident Handler.'},
+{id:'cissp', nom:'CISSP', org:'ISC2', free:false, prix:'~749 USD', niv:'Expert', lien:'https://www.isc2.org/certifications/cissp', desc:'RSSI.'}
+];
+
+var JOBS = [
+{t:'Analyste Forensics', o:'Groupe COFINA', l:'Abidjan', d:'Investigation numérique.', u:'https://www.groupecofina.com/carriere/'},
+{t:'Ingénieur Sécurité Senior', o:'BDU CI', l:'Abidjan', d:'Forensics, IR.', u:'https://bduci.com/'},
+{t:'Analyste SOC', o:'DC/BR UMOA', l:'Abidjan', d:'Forensics, réponse.', u:'https://www.dcbruemoa.org/'},
+{t:'Stagiaire SOC', o:'AFG Holding', l:'Abidjan', d:'Triage, forensics junior.', u:'https://afgholding-sa.com/'},
+{t:'Incident Responder', o:'Djamo', l:'Abidjan', d:'Réponse + forensics.', u:'https://djamo.com/'},
+{t:'Analyste Cyber Junior', o:'Eclozion', l:'Abidjan', d:'Junior forensics.', u:'https://ci.eclozion-opportunities.com/'}
+];
+
+var EXAMENS = {
+partiel: {
+  titre:'Partiel — Défis 1-5',
+  desc:'Intro, custody, imagerie, disque, Windows. Réussite : 60 %.',
+  req:[1,2,3,4,5],
+  qs:[
+    {q:'Forensics ?',o:['Investigation numérique','Antivirus','Chiffrement','Firewall'],c:0,e:'Investigation.'},
+    {q:'Chaîne de custody ?',o:['Documentation preuves','Chiffrement','Antivirus','Rien'],c:0,e:'Documentation.'},
+    {q:'Imagerie ?',o:['Copie bit-à-bit','Chiffrement','Hash','Rien'],c:0,e:'Bit-à-bit.'},
+    {q:'Autopsy ?',o:['Scanner réseau','Analyser disque','Cracker mdp','Router'],c:1,e:'Disque.'},
+    {q:'Event 4625 ?',o:['Connexion réussie','Échec','Processus','Service'],c:1,e:'Échec.'}
+  ]
+},
+final: {
+  titre:'Final — Défis 1-10',
+  desc:'Complet. Réussite : 80 %.',
+  req:[1,2,3,4,5,6,7,8,9,10],
+  qs:[
+    {q:'auth.log ?',o:['Authentifications','Fichiers','Emails','Réseau'],c:0,e:'Auth.'},
+    {q:'Bash history ?',o:['Commandes','Hash','Certificat','Rien'],c:0,e:'Commandes.'},
+    {q:'Volatility ?',o:['Disque','RAM','Réseau','CPU'],c:1,e:'RAM.'},
+    {q:'malfind ?',o:['Code injecté','USB','Réseau','Crypto'],c:0,e:'Injection.'},
+    {q:'PCAP ?',o:['Paquets réseau','Fichiers','Registre','RAM'],c:0,e:'Paquets.'},
+    {q:'Beaconing ?',o:['Communication régulière','Chiffrement','Antivirus','Scan'],c:0,e:'Beacon.'},
+    {q:'Faraday bag ?',o:['Remote wipe','Photos','Batterie','GPS'],c:0,e:'Wipe.'},
+    {q:'Cellebrite ?',o:['Antivirus','Forensics mobile','Chiffrement','Pare-feu'],c:1,e:'Mobile.'},
+    {q:'Rapport forensics ?',o:['Factuel','Opinion','Court','Secret'],c:0,e:'Factuel.'},
+    {q:'Témoignage ?',o:['Sous serment','Improvisé','Court','Secret'],c:0,e:'Serment.'}
+  ]
+}
+};
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function header() {
+  var el = document.getElementById('hs'); if (!el) return;
+  var u = user();
+  if (u) {
+    el.innerHTML = '<span class="pill">👤 ' + u.name + '</span>' +
+      '<span class="pill">N1 <b>' + countDone(1) + '</b></span>' +
+      '<span class="pill">N2 <b>' + countDone(2) + '</b></span>' +
+      '<span class="pill">N3 <b>' + countDone(3) + '</b></span>' +
+      '<span class="pill">N4 <b>' + countDone(4) + '</b></span>' +
+      '<span class="pill">N5 <b>' + countDone(5) + '</b></span>' +
+      '<span class="pill">N6 <b>' + countDone(6) + '</b></span>' +
+      '<span class="pill">N7 <b>' + countDone(7) + '</b></span>' +
+      '<span class="pill">N8 <b>' + countDone(8) + '</b></span>' +
+      '<a onclick="logout()">Déconnexion</a>';
+  } else { el.innerHTML = '<span class="pill">Non connecté</span>'; }
+}
+
+function renderLogin() {
+  document.getElementById('app').innerHTML = '<div class="login-box"><div style="text-align:center;margin-bottom:18px"><div style="display:inline-block;width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#0ea5e9,#0284c7);display:flex;align-items:center;justify-content:center;font-size:1.7rem">🔍</div></div><h2>Niveau 8</h2><p style="text-align:center;color:#94a3b8;font-size:.85rem;margin-bottom:22px">Connecte-toi pour accéder au niveau Forensics.</p><input id="loginName" placeholder="Ton prénom" autocomplete="off"><button onclick="login()">Se connecter</button></div>';
+  setTimeout(function(){ var e = document.getElementById('loginName'); if (e) e.focus(); }, 100);
+}
+
+function renderLocked() {
+  var d7 = countDone(7);
+  document.getElementById('app').innerHTML = '<div class="card"><div class="locked"><div class="icon">🔒</div><h3>Niveau 8 verrouillé</h3><p>Termine les 10 défis du Niveau 7 pour accéder au Niveau 8.</p><div class="bar"><div style="width:' + (d7*10) + '%"></div></div><p style="color:#fbbf24;font-weight:700;margin-top:10px">' + d7 + ' / 10 défis Niveau 7</p><div class="nav" style="justify-content:center;margin-top:14px"><button onclick="simulate()">🔓 Simuler N1 à N7</button></div></div></div>';
+}
+
+function renderHome() {
+  var u = user(); if (!u) return renderLogin();
+  var d = countDone(8);
+  var pct = Math.round(d / 10 * 100);
+  var html = '<div class="card"><h2>Bienvenue, ' + u.name + ' 🔍</h2><p>Niveau 8 : <strong>Forensics</strong>. Custody, imagerie, disque, Windows, Linux, RAM, réseau, mobile, rapport.</p>';
+  html += '<div class="stats-grid"><div class="stat"><span class="big">' + d + '/10</span><span class="lbl">Défis N8</span></div><div class="stat"><span class="big">' + u.certs.length + '</span><span class="lbl">Certifs</span></div><div class="stat"><span class="big">' + pct + '%</span><span class="lbl">Progression</span></div><div class="stat"><span class="big">' + (u.examens['8_partiel'] ? '✅' : '—') + '</span><span class="lbl">Partiel</span></div></div>';
+  html += '<div class="progress-bar"><div style="width:' + pct + '%"></div></div></div>';
+  html += '<div class="card"><h2>🚀 Accès rapide</h2><div class="nav">';
+  html += '<button onclick="go(\'\')">📚 Défis</button>';
+  html += '<button class="sec" onclick="go(\'stats\')">📊 Stats</button>';
+  html += '<button class="gold" onclick="go(\'certif\')">🎓 Certificat</button>';
+  html += '<button class="sec" onclick="go(\'cv\')">📄 CV</button>';
+  html += '<button class="sec" onclick="go(\'jobs\')">💼 Emploi</button>';
+  html += '<button class="sec" onclick="go(\'examens\')">📝 Examens</button>';
+  html += '<button class="sec" onclick="go(\'certs\')">🎓 Certifications</button>';
+  html += '<button class="sec" onclick="go(\'sync\')">🌐 Sync</button>';
+  html += '</div></div>';
+  html += '<div class="card"><h2>🎯 Les 10 défis</h2><div class="grid">';
+  for (var i = 0; i < DEFIS.length; i++) {
+    var df = DEFIS[i];
+    var done = u.done['8_' + df.id];
+    html += '<div class="btn ' + (done ? 'done' : '') + '" onclick="go(\'defi/' + df.id + '\')"><span class="n">Défi ' + df.id + (done ? ' ✓' : '') + '</span><span class="ti">' + df.titre + '</span></div>';
+  }
+  html += '</div></div>';
+  document.getElementById('app').innerHTML = html;
+}
+
+function renderDefi(id) {
+  var d = null;
+  for (var i = 0; i < DEFIS.length; i++) { if (DEFIS[i].id === id) { d = DEFIS[i]; break; } }
+  if (!d) { alert('Défi introuvable'); go('home'); return; }
+  var u = user();
+  var done = u.done['8_' + id];
+  var html = '<div class="crumb"><a onclick="go(\'home\')">Accueil N8</a> / Défi ' + id + '</div>';
+  html += '<div class="card"><h2>' + d.titre + '</h2><div class="intro">' + d.intro + '</div></div>';
+  html += '<div class="card cours"><h2>📖 Cours</h2>' + d.cours + '</div>';
+  html += '<div class="card cours"><h2>🔧 Cas pratiques</h2>' + d.cas + '</div>';
+  html += '<div class="card"><h2>📝 Quiz</h2><div class="quiz">';
+  for (var qi = 0; qi < d.quiz.length; qi++) {
+    var q = d.quiz[qi];
+    html += '<div class="q" data-i="' + qi + '"><p>Q' + (qi + 1) + '. ' + q.q + '</p>';
+    for (var oi = 0; oi < q.o.length; oi++) {
+      html += '<label><input type="radio" name="q' + qi + '" value="' + oi + '"> ' + q.o[oi] + '</label>';
+    }
+    html += '<div class="exp" id="exp' + qi + '">' + q.e + '</div></div>';
+  }
+  html += '<button onclick="validerQuiz(' + id + ')">Vérifier</button><div id="qr"></div></div></div>';
+  html += '<div class="nav">';
+  if (id > 1) html += '<button class="sec" onclick="go(\'defi/' + (id - 1) + '\')">← Précédent</button>';
+  if (id < 10) html += '<button class="sec" onclick="go(\'defi/' + (id + 1) + '\')">Suivant →</button>';
+  html += '<button onclick="go(\'home\')">🏠 Accueil</button>';
+  if (done) html += '<button class="sec">✓ Validé</button>';
+  html += '</div>';
+  document.getElementById('app').innerHTML = html;
+  window.scrollTo(0, 0);
+}
+
+function validerQuiz(id) {
+  var d = null;
+  for (var i = 0; i < DEFIS.length; i++) { if (DEFIS[i].id === id) { d = DEFIS[i]; break; } }
+  if (!d) return;
+  var correct = 0;
+  for (var qi = 0; qi < d.quiz.length; qi++) {
+    var q = d.quiz[qi];
+    var sel = document.querySelector('input[name="q' + qi + '"]:checked');
+    var labels = document.querySelectorAll('.q[data-i="' + qi + '"] label');
+    for (var li = 0; li < labels.length; li++) { labels[li].classList.remove('ok','ko'); }
+    var e = document.getElementById('exp' + qi); if (e) e.style.display = 'block';
+    if (sel && parseInt(sel.value) === q.c) { correct++; labels[q.c].classList.add('ok'); }
+    else { labels[q.c].classList.add('ok'); if (sel) labels[parseInt(sel.value)].classList.add('ko'); }
+  }
+  var u = user();
+  if (correct === d.quiz.length) {
+    var k = '8_' + id;
+    if (!u.done[k]) {
+      u.done[k] = true;
+      var t = today();
+      if (!u.jours[t]) u.jours[t] = [];
+      if (u.jours[t].indexOf(k) === -1) u.jours[t].push(k);
+    }
+  }
+  save();
+  var r = document.getElementById('qr');
+  var pass = correct === d.quiz.length;
+  r.className = 'res ' + (pass ? 'g' : 'r');
+  r.textContent = pass ? '🎉 ' + correct + '/' + d.quiz.length + ' — Défi validé !' : correct + '/' + d.quiz.length + ' — Réessaie';
+  if (pass && id === 10 && isComplete(8)) {
+    setTimeout(function(){ alert('🏆 Tu as terminé le Niveau 8 !'); }, 400);
+  }
+}
+
+function renderCertif() {
+  var u = user(); if (!u) return;
+  var d = countDone(8);
+  var unlocked = d >= 10;
+  var certId = 'MDPC-N8-' + u.name.slice(0,3).toUpperCase() + '-' + d;
+  var html = '<div class="card">';
+  if (!unlocked) {
+    html += '<div class="locked"><div class="icon">🔒</div><h3>Certificat N8 verrouillé</h3><p>Valide les 10 défis.</p><div class="bar"><div style="width:' + (d*10) + '%"></div></div><p style="color:#fbbf24;font-weight:700;margin-top:10px">' + d + ' / 10</p><div class="nav" style="justify-content:center;margin-top:14px"><button onclick="go(\'\')">📚 Continuer</button></div></div>';
+  } else {
+    html += '<div class="cert"><div class="seal">🏆</div><div class="sub">Certificat officiel</div><div class="title">Niveau 8 — Forensics</div><p style="color:#94a3b8;margin:12px 0;font-size:.9rem">Décerné à</p><div class="name">' + u.name + '</div><p style="color:#94a3b8;max-width:500px;margin:12px auto;font-size:.88rem">Pour avoir validé les 10 défis du Niveau 8 : custody, imagerie disque, analyse Windows/Linux, RAM, réseau, mobile, rapport forensics.</p><div class="details"><div>Défis<strong>10/10</strong></div><div>Partiel<strong>' + (u.examens['8_partiel'] ? '✅' : '—') + '</strong></div><div>Final<strong>' + (u.examens['8_final'] ? '✅' : '—') + '</strong></div><div>Date<strong>' + new Date().toLocaleDateString('fr-FR') + '</strong></div></div><div class="id">ID : ' + certId + '</div><div class="sig"><div class="sig-block"><div class="sig-name">H. N\'GUESSAN</div><div class="sig-line">Fondateur</div></div><div class="sig-block"><div class="sig-name" style="font-family:Georgia,serif">' + new Date().toLocaleDateString('fr-FR') + '</div><div class="sig-line">Date</div></div></div></div>';
+    html += '<div class="nav" style="justify-content:center;margin-top:14px"><button onclick="window.print()">🖨️ PDF</button><button class="gold" onclick="go(\'cv\')">📄 CV</button></div>';
+  }
+  html += '</div>';
+  document.getElementById('app').innerHTML = html;
+}
+
+function renderCV() {
+  var u = user(); if (!u) return;
+  var badges = '';
+  for (var i = 0; i < u.certs.length; i++) {
+    for (var j = 0; j < CERTS.length; j++) {
+      if (CERTS[j].id === u.certs[i]) { badges += '<span class="badge">' + CERTS[j].nom + '</span>'; break; }
+    }
+  }
+  if (!badges) badges = '<span style="color:#94a3b8;font-size:.85rem;font-style:italic">Aucune certification.</span>';
+  var defis = '';
+  for (var i = 0; i < DEFIS.length; i++) {
+    defis += '<li>' + (u.done['8_' + DEFIS[i].id] ? '✓' : '○') + ' ' + DEFIS[i].titre + '</li>';
+  }
+  var html = '<div class="card" style="background:none;border:none;padding:0">';
+  html += '<div class="nav" style="margin-bottom:14px"><button onclick="window.print()">🖨️ PDF</button><button class="sec" onclick="copyCV()">📋 Copier</button></div>';
+  html += '<div class="cv-box"><h1>' + u.name.toUpperCase() + '</h1><div class="role">Étudiant L2 UVCI — Aspirant Analyste Forensics / SOC</div>';
+  html += '<h2>Formation</h2><ul><li>Licence 2 — UVCI (Sciences informatiques)</li><li>Mon Drôle Parcours Cyber N1 → N8 (N8 : ' + countDone(8) + '/10)</li></ul>';
+  html += '<h2>Compétences</h2><ul><li>Chaîne de custody et procédures légales</li><li>Imagerie disque (dd, FTK, Guymager)</li><li>Analyse disque (Autopsy, SleuthKit)</li><li>Forensics Windows (Event Logs, registre, MFT)</li><li>Forensics Linux (logs, bash history)</li><li>Forensics RAM (Volatility)</li><li>Forensics réseau (Wireshark, tcpdump)</li><li>Forensics mobile (ADB, MobSF)</li><li>Rapport et témoignage</li></ul>';
+  html += '<h2>Défis N8 validés</h2><ul>' + defis + '</ul>';
+  html += '<h2>Certifications</h2><div>' + badges + '</div>';
+  html += '<p style="margin-top:20px;font-size:.72rem;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:12px">Généré le ' + new Date().toLocaleDateString('fr-FR') + ' · H. N\'GUESSAN ®</p></div></div>';
+  document.getElementById('app').innerHTML = html;
+}
+
+function copyCV() {
+  var u = user(); if (!u) return;
+  var t = u.name.toUpperCase() + '\nÉtudiant L2 UVCI — Aspirant Analyste Forensics / SOC\n\nParcours Cyber N1 à N8\n\nCompétences : custody, imagerie, disque, Windows, Linux, RAM, réseau, mobile, rapport\n\nGénéré le ' + new Date().toLocaleDateString('fr-FR');
+  if (navigator.clipboard) { navigator.clipboard.writeText(t).then(function(){ alert('CV copié !'); }, function(){ fbCopy(t); }); } else fbCopy(t);
+}
+function fbCopy(t) { var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); alert('CV copié !'); } catch (e) { alert('Copie manuelle'); } document.body.removeChild(ta); }
+
+function renderStats() {
+  var u = user(); if (!u) return;
+  var t = today();
+  var tt = u.jours[t] || [];
+  var html = '<div class="card"><h2>📊 Statistiques</h2><div class="stats-grid">';
+  html += '<div class="stat"><span class="big">' + countDone(1) + '</span><span class="lbl">N1</span></div>';
+  html += '<div class="stat"><span class="big">' + countDone(2) + '</span><span class="lbl">N2</span></div>';
+  html += '<div class="stat"><span class="big">' + countDone(3) + '</span><span class="lbl">N3</span></div>';
+  html += '<div class="stat"><span class="big">' + countDone(4) + '</span><span class="lbl">N4</span></div>';
+  html += '<div class="stat"><span class="big">' + countDone(5) + '</span><span class="lbl">N5</span></div>';
+  html += '<div class="stat"><span class="big">' + countDone(6) + '</span><span class="lbl">N6</span></div>';
+  html += '<div class="stat"><span class="big">' + countDone(7) + '</span><span class="lbl">N7</span></div>';
+  html += '<div class="stat"><span class="big">' + countDone(8) + '</span><span class="lbl">N8</span></div>';
+  html += '</div></div>';
+  html += '<div class="card"><h3>🔥 Aujourd hui</h3>';
+  if (tt.length === 0) html += '<p style="color:#94a3b8">Aucun défi.</p>';
+  else { html += '<ul class="today">'; for (var i = 0; i < tt.length; i++) { html += '<li>✅ ' + tt[i] + '</li>'; } html += '</ul>'; }
+  html += '</div>';
+  document.getElementById('app').innerHTML = html;
+}
+
+function renderJobs() {
+  var html = '<div class="card"><h2>💼 Offres CI</h2><div class="jobs-grid">';
+  for (var i = 0; i < JOBS.length; i++) {
+    var j = JOBS[i];
+    html += '<div class="job"><h4>' + j.t + '</h4><div class="org">' + j.o + ' · ' + j.l + '</div><p>' + j.d + '</p><a href="' + j.u + '" target="_blank">Voir ↗</a></div>';
+  }
+  html += '</div></div>';
+  document.getElementById('app').innerHTML = html;
+}
+
+function renderCerts() {
+  var u = user();
+  var html = '<div class="card"><h2>🎓 Certifications</h2><div class="tabs">';
+  html += '<div class="tab active" onclick="filterCerts(this,\'all\')">Toutes</div>';
+  html += '<div class="tab" onclick="filterCerts(this,\'free\')">Gratuites</div>';
+  html += '<div class="tab" onclick="filterCerts(this,\'paid\')">Payantes</div>';
+  html += '<div class="tab" onclick="filterCerts(this,\'done\')">Obtenues</div>';
+  html += '</div><div class="certs-grid">';
+  for (var i = 0; i < CERTS.length; i++) {
+    var c = CERTS[i];
+    var isD = u.certs.indexOf(c.id) !== -1;
+    html += '<div class="cert-item ' + (c.free ? 'free' : 'paid') + ' ' + (isD ? 'done' : '') + '" data-t="' + (c.free ? 'free' : 'paid') + '" data-d="' + (isD ? '1' : '0') + '">';
+    html += '<h4>' + c.nom + '</h4><div class="org">' + c.org + '</div>';
+    html += '<div><span class="tag ' + (c.free ? 'free' : 'paid') + '">' + (c.free ? 'GRATUIT' : c.prix) + '</span><span class="tag lvl">' + c.niv + '</span></div>';
+    html += '<p>' + c.desc + '</p><a href="' + c.lien + '" target="_blank">Voir ↗</a>';
+    html += ' <button class="sec" style="padding:5px 10px;font-size:.74em" onclick="toggleCert(\'' + c.id + '\')">' + (isD ? '✓' : 'Marquer') + '</button>';
+    html += '</div>';
+  }
+  html += '</div></div>';
+  document.getElementById('app').innerHTML = html;
+}
+function filterCerts(el, type) {
+  var tabs = document.querySelectorAll('.tab');
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+  el.classList.add('active');
+  var items = document.querySelectorAll('.cert-item');
+  for (var i = 0; i < items.length; i++) {
+    var m = false;
+    if (type === 'all') m = true;
+    else if (type === 'done') m = items[i].dataset.d === '1';
+    else m = items[i].dataset.t === type;
+    items[i].style.display = m ? 'block' : 'none';
+  }
+}
+function toggleCert(id) {
+  var u = user(); if (!u) return;
+  var i = u.certs.indexOf(id);
+  if (i === -1) u.certs.push(id); else u.certs.splice(i, 1);
+  save(); renderCerts();
+}
+
+function renderExamens() {
+  var u = user(); if (!u) return;
+  var html = '<div class="card"><h2>📝 Examens N8</h2>';
+  var types = ['partiel','final'];
+  for (var i = 0; i < types.length; i++) {
+    var type = types[i];
+    var e = EXAMENS[type];
+    var passed = u.examens['8_' + type];
+    var ready = true;
+    for (var j = 0; j < e.req.length; j++) { if (!u.done['8_' + e.req[j]]) { ready = false; break; } }
+    var cls = 'exam ' + (passed ? 'passed' : (ready ? '' : 'locked'));
+    html += '<div class="' + cls + '"><h4>' + e.titre + '</h4><p style="font-size:.85em;color:#cbd5e1">' + e.desc + '</p>';
+    if (passed) html += '<p style="color:#86efac;font-size:.85em">✅ ' + passed + '</p><button class="sec" onclick="go(\'examen/' + type + '\')">Refaire</button>';
+    else if (ready) html += '<button class="gold" onclick="go(\'examen/' + type + '\')">Passer</button>';
+    else html += '<p style="color:#fbbf24;font-size:.82em">🔒 Défis ' + e.req.join(', ') + '</p>';
+    html += '</div>';
+  }
+  html += '</div>';
+  document.getElementById('app').innerHTML = html;
+}
+
+function renderExamen(type) {
+  var u = user(); if (!u) return;
+  var e = EXAMENS[type]; if (!e) { go('examens'); return; }
+  var ready = true;
+  for (var j = 0; j < e.req.length; j++) { if (!u.done['8_' + e.req[j]]) { ready = false; break; } }
+  if (!ready) { alert('Valide les défis requis.'); go('examens'); return; }
+  var html = '<div class="card"><h2>' + e.titre + '</h2><p style="color:#94a3b8;font-size:.85em">' + e.desc + '</p><div class="quiz">';
+  for (var qi = 0; qi < e.qs.length; qi++) {
+    var q = e.qs[qi];
+    html += '<div class="q" data-i="' + qi + '"><p>Q' + (qi + 1) + '. ' + q.q + '</p>';
+    for (var oi = 0; oi < q.o.length; oi++) {
+      html += '<label><input type="radio" name="ex' + qi + '" value="' + oi + '"> ' + q.o[oi] + '</label>';
+    }
+    html += '<div class="exp" id="exexp' + qi + '">' + q.e + '</div></div>';
+  }
+  html += '<button onclick="validerExamen(\'' + type + '\')">Soumettre</button><div id="er"></div></div></div>';
+  document.getElementById('app').innerHTML = html;
+}
+
+function validerExamen(type) {
+  var u = user(); if (!u) return;
+  var e = EXAMENS[type]; if (!e) return;
+  var correct = 0;
+  for (var qi = 0; qi < e.qs.length; qi++) {
+    var q = e.qs[qi];
+    var sel = document.querySelector('input[name="ex' + qi + '"]:checked');
+    var labels = document.querySelectorAll('.q[data-i="' + qi + '"] label');
+    for (var li = 0; li < labels.length; li++) { labels[li].classList.remove('ok','ko'); }
+    var ex = document.getElementById('exexp' + qi); if (ex) ex.style.display = 'block';
+    if (sel && parseInt(sel.value) === q.c) { correct++; labels[q.c].classList.add('ok'); }
+    else { labels[q.c].classList.add('ok'); if (sel) labels[parseInt(sel.value)].classList.add('ko'); }
+  }
+  var pct = Math.round(correct / e.qs.length * 100);
+  var req = type === 'final' ? 80 : 60;
+  var pass = pct >= req;
+  if (pass) { u.examens['8_' + type] = today(); save(); }
+  var r = document.getElementById('er');
+  r.className = 'res ' + (pass ? 'g' : 'r');
+  r.textContent = pass ? '🎉 ' + correct + '/' + e.qs.length + ' (' + pct + '%)' : correct + '/' + e.qs.length + ' (' + pct + '%) — Il faut ' + req + '%';
+}
+
+function b64(s) { try { return btoa(unescape(encodeURIComponent(s))); } catch(e) { return ''; } }
+function unb64(b) { try { return decodeURIComponent(escape(atob(b.replace(/\s/g,'')))); } catch(e) { return null; } }
+function exportCode() { return b64(JSON.stringify(state)); }
+function importCode(c) { var j = unb64(c.trim()); if (!j) return false; try { var d = JSON.parse(j); if (!d) return false; state = Object.assign({}, state, d); save(); return true; } catch(e) { return false; } }
+function dlBackup() { var b = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'}); var url = URL.createObjectURL(b); var a = document.createElement('a'); a.href = url; a.download = 'mdpc-n8-' + today() + '.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+function readFile(input) { var f = input.files[0]; if (!f) return; var r = new FileReader(); r.onload = function(e) { try { var d = JSON.parse(e.target.result); state = Object.assign({}, state, d); save(); alert('Restauré !'); route(); } catch(err) { alert('Invalide'); } }; r.readAsText(f); }
+
+function renderSync() {
+  var code = exportCode();
+  var html = '<div class="card"><h2>🌐 Sync</h2></div>';
+  html += '<div class="card"><h3>📋 Code</h3><div class="sync-box"><label>Ton code</label><textarea id="so" readonly onclick="this.select()">' + code + '</textarea><div style="margin-top:8px"><button onclick="copyCode()">Copier</button></div></div>';
+  html += '<div class="sync-box"><label>Coller un code</label><textarea id="si" placeholder="Colle ici..."></textarea><div style="margin-top:8px"><button onclick="applyCode()">Restaurer</button></div></div></div>';
+  html += '<div class="card"><h3>💾 Fichier</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><button onclick="dlBackup()">Télécharger</button><input type="file" id="bf" accept=".json" style="display:none" onchange="readFile(this)"><button class="sec" onclick="document.getElementById(\'bf\').click()">Importer</button></div></div>';
+  document.getElementById('app').innerHTML = html;
+}
+function copyCode() { var ta = document.getElementById('so'); ta.select(); try { document.execCommand('copy'); alert('Copié !'); } catch(e) { alert('Manuel'); } }
+function applyCode() { var c = document.getElementById('si').value; if (!c.trim()) { alert('Colle un code.'); return; } if (importCode(c)) { alert('Restauré !'); route(); } else alert('Code invalide.'); }
+
+function route() {
+  try {
+    header();
+    if (!state.currentUser) { renderLogin(); return; }
+    if (!isUnlocked(8)) { renderLocked(); return; }
+    var h = (location.hash || '#home').slice(1);
+    var p = h.split('/');
+    if (p[0] === 'home' || p[0] === '') return renderHome();
+    if (p[0] === 'defi' && p[1]) return renderDefi(parseInt(p[1]));
+    if (p[0] === 'certif') return renderCertif();
+    if (p[0] === 'cv') return renderCV();
+    if (p[0] === 'stats') return renderStats();
+    if (p[0] === 'jobs') return renderJobs();
+    if (p[0] === 'examens') return renderExamens();
+    if (p[0] === 'examen' && p[1]) return renderExamen(p[1]);
+    if (p[0] === 'certs') return renderCerts();
+    if (p[0] === 'sync') return renderSync();
+    renderHome();
+  } catch(e) {
+    console.error('Route error:', e);
+    document.getElementById('app').innerHTML = '<div class="card"><h2 style="color:#ef4444">Erreur</h2><p style="color:#ef4444">' + e.message + '</p><pre style="color:#fca5a5;font-size:.8em;white-space:pre-wrap">' + (e.stack || '') + '</pre></div>';
+  }
+}
+window.addEventListener('hashchange', route);
+try { route(); } catch(e) {
+  document.getElementById('app').innerHTML = '<div class="card"><h2 style="color:#ef4444">Erreur init</h2><p style="color:#ef4444">' + e.message + '</p></div>';
+}
+</script>
+</body>
+</html>
